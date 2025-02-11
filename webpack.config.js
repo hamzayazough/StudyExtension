@@ -7,7 +7,7 @@ module.exports = {
   devtool: false,
   entry: {
     popup: "./src/popup.jsx",
-    options: "./src/options.jsx",
+    options: "./src/options.js",
     content: "./src/content.js",
     background: "./src/background.js"
   },

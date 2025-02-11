@@ -1,28 +1,16 @@
-console.log("✅ content.js loaded");
+console.log("🟢 content.js started execution.");
 
-// Prevent duplicate popups
-if (document.getElementById("ai-popup-root")) {
-    console.log("🛑 Popup already exists, removing it...");
-    document.getElementById("ai-popup-root").remove();
-}
+// ✅ Retrieve the stored text from chrome.storage
+chrome.storage.sync.get("selectedText", function (data) {
+  if (chrome.runtime.lastError) {
+    console.error("❌ Error accessing storage:", chrome.runtime.lastError.message);
+    return;
+  }
 
-// Retrieve selected text from storage
-chrome.storage.sync.get("selectedText", (data) => {
-    if (!data.selectedText) {
-        console.error("❌ No selected text found in storage.");
-        return;
-    }
-    console.log("✅ Selected text retrieved:", data.selectedText);
+  if (!data.selectedText) {
+    console.warn("ℹ️ No selected text found in storage.");
+    return;
+  }
 
-    // Create a root div for React
-    const popupContainer = document.createElement("div");
-    popupContainer.id = "ai-popup-root";
-    document.body.appendChild(popupContainer);
-    console.log("✅ Popup container created.");
-
-    // Inject the React popup script
-    const script = document.createElement("script");
-    script.src = chrome.runtime.getURL("popup.js");
-    script.onload = () => console.log("✅ Popup script loaded successfully.");
-    document.body.appendChild(script);
+  console.log("✅ Selected text retrieved:", data.selectedText);
 });
