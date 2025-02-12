@@ -17,47 +17,51 @@ const Popup = () => {
         chrome.windows.remove(window.id);
       });
     } else {
-      console.warn("⚠️ Unable to close popup: chrome.windows API not available.");
+      console.warn("Unable to close popup: chrome.windows API not available.");
     }
   };
 
   useEffect(() => {
     if (!chrome || !chrome.storage) {
-      setError("❌ Not running inside a Chrome extension!");
+      setError("Not running inside a Chrome extension!");
       return;
     }
 
-    console.log("🟢 Popup started execution in Chrome storage.");
-
     chrome.storage.sync.get(["selectedText", "apiKey"], (data) => {
         if (chrome.runtime.lastError) {
-          setError(`⚠️ Error accessing storage: ${chrome.runtime.lastError.message}`);
+          setError(`Error accessing storage: ${chrome.runtime.lastError.message}`);
           return;
         }
-      
-        console.log("📦 Retrieved from storage:", data);
-      
+            
         if (data.apiKey && data.apiKey.trim() !== "") {
-          console.log("✅ API key found:", data.apiKey);
+
           setApiKey(data.apiKey);
-          setGroqInstance(new Groq({ apiKey: data.apiKey, dangerouslyAllowBrowser: true }));
+
+          const instance = new Groq({ apiKey: data.apiKey, dangerouslyAllowBrowser: true });
+          setGroqInstance(instance);
+
         } else {
-          console.warn("❌ API key is empty or not found.");
-          setError("❌ API key not set. Please configure it in extension settings.");
-        }
-      
-        if (data.selectedText) {
-          const initialMessage = { role: "user", content: data.selectedText };
-          setMessages([initialMessage]);
-          setTimeout(() => fetchAIResponse([initialMessage]), 500);
-        }
-      });
-      
+          console.warn("API key is empty or not found.");
+          setError("API key not set. Please configure it in extension settings.");
+        }  
+      });    
   }, []);
+  
+    useEffect(() => {
+        if (groqInstance && messages.length === 0) {
+            chrome.storage.sync.get("selectedText", (data) => {
+                if (data.selectedText) {
+                    const initialMessage = { role: "user", content: data.selectedText };
+                    setMessages([initialMessage]);
+                    setTimeout(() => fetchAIResponse([initialMessage]), 500);
+                }
+            });
+        }
+    }, [groqInstance]); 
 
   const fetchAIResponse = async (currentMessages = messages) => {
     if (!apiKey || !groqInstance) {
-      setError("❌ Please set your API key in the extension settings.");
+      setError("Please set your API key in the extension settings.");
       return;
     }
 
@@ -72,7 +76,7 @@ const Popup = () => {
       const aiMessage = response.choices?.[0]?.message?.content || "No response.";
       setMessages([...currentMessages, { role: "assistant", content: aiMessage }]);
     } catch (err) {
-      setError(`⚠️ Failed to fetch AI response: ${err.message}`);
+      setError(`Failed to fetch AI response: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -131,5 +135,5 @@ if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(<Popup />);
 } else {
-  console.error("❌ Failed to find #ai-popup-root for mounting.");
+  console.error("Failed to find #ai-popup-root for mounting.");
 }

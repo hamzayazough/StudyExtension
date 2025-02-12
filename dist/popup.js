@@ -30213,8 +30213,6 @@ var Popup = function Popup() {
     _useState12 = _slicedToArray(_useState11, 2),
     groqInstance = _useState12[0],
     setGroqInstance = _useState12[1];
-
-  // ✅ Close popup
   var closePopup = function closePopup() {
     var _chrome;
     if ((_chrome = chrome) !== null && _chrome !== void 0 && _chrome.windows) {
@@ -30222,49 +30220,48 @@ var Popup = function Popup() {
         chrome.windows.remove(window.id);
       });
     } else {
-      console.warn("⚠️ Unable to close popup: chrome.windows API not available.");
+      console.warn("Unable to close popup: chrome.windows API not available.");
     }
   };
-
-  // ✅ Retrieve stored API key & selected text
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     if (!chrome || !chrome.storage) {
-      setError("❌ Not running inside a Chrome extension!");
+      setError("Not running inside a Chrome extension!");
       return;
     }
-    console.log("🟢 Popup started execution in Chrome storage.");
     chrome.storage.sync.get(["selectedText", "apiKey"], function (data) {
       if (chrome.runtime.lastError) {
-        setError("\u26A0\uFE0F Error accessing storage: ".concat(chrome.runtime.lastError.message));
+        setError("Error accessing storage: ".concat(chrome.runtime.lastError.message));
         return;
       }
-      console.log("📦 Retrieved from storage:", data); // ✅ Debugging
-
       if (data.apiKey && data.apiKey.trim() !== "") {
-        console.log("✅ API key found:", data.apiKey);
         setApiKey(data.apiKey);
-        setGroqInstance(new groq_sdk__WEBPACK_IMPORTED_MODULE_3__["default"]({
+        var instance = new groq_sdk__WEBPACK_IMPORTED_MODULE_3__["default"]({
           apiKey: data.apiKey,
           dangerouslyAllowBrowser: true
-        }));
+        });
+        setGroqInstance(instance);
       } else {
-        console.warn("❌ API key is empty or not found.");
-        setError("❌ API key not set. Please configure it in extension settings.");
-      }
-      if (data.selectedText) {
-        var initialMessage = {
-          role: "user",
-          content: data.selectedText
-        };
-        setMessages([initialMessage]);
-        setTimeout(function () {
-          return fetchAIResponse([initialMessage]);
-        }, 500);
+        console.warn("API key is empty or not found.");
+        setError("API key not set. Please configure it in extension settings.");
       }
     });
   }, []);
-
-  // ✅ Fetch AI response
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+    if (groqInstance && messages.length === 0) {
+      chrome.storage.sync.get("selectedText", function (data) {
+        if (data.selectedText) {
+          var initialMessage = {
+            role: "user",
+            content: data.selectedText
+          };
+          setMessages([initialMessage]);
+          setTimeout(function () {
+            return fetchAIResponse([initialMessage]);
+          }, 500);
+        }
+      });
+    }
+  }, [groqInstance]);
   var fetchAIResponse = /*#__PURE__*/function () {
     var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
       var currentMessages,
@@ -30280,7 +30277,7 @@ var Popup = function Popup() {
               _context.next = 4;
               break;
             }
-            setError("❌ Please set your API key in the extension settings.");
+            setError("Please set your API key in the extension settings.");
             return _context.abrupt("return");
           case 4:
             _context.prev = 4;
@@ -30302,7 +30299,7 @@ var Popup = function Popup() {
           case 13:
             _context.prev = 13;
             _context.t0 = _context["catch"](4);
-            setError("\u26A0\uFE0F Failed to fetch AI response: ".concat(_context.t0.message));
+            setError("Failed to fetch AI response: ".concat(_context.t0.message));
           case 16:
             _context.prev = 16;
             setLoading(false);
@@ -30317,8 +30314,6 @@ var Popup = function Popup() {
       return _ref.apply(this, arguments);
     };
   }();
-
-  // ✅ Handle user input submission
   var handleSendMessage = function handleSendMessage() {
     if (!text.trim()) return;
     var userMessage = {
@@ -30365,14 +30360,12 @@ var Popup = function Popup() {
     disabled: loading
   }, loading ? "⏳" : "➤"))));
 };
-
-// Mount the popup
 var rootElement = document.getElementById("ai-popup-root");
 if (rootElement) {
   var root = react_dom_client__WEBPACK_IMPORTED_MODULE_1__.createRoot(rootElement);
   root.render(/*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(Popup, null));
 } else {
-  console.error("❌ Failed to find #ai-popup-root for mounting.");
+  console.error("Failed to find #ai-popup-root for mounting.");
 }
 })();
 

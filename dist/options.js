@@ -2,7 +2,6 @@
 /*!************************!*\
   !*** ./src/options.js ***!
   \************************/
-console.log("🟢 options.js loaded successfully!");
 window.onload = function () {
   var saveButton = document.getElementById("saveApiKey");
   var apiKeyInput = document.getElementById("apiKeyInput");
@@ -21,7 +20,7 @@ window.onload = function () {
       apiKey: apiKey
     }, function () {
       chrome.storage.sync.get("apiKey", function (data) {
-        console.log("📦 API Key stored:", data.apiKey);
+        console.log("📦 API Key stored");
       });
       statusText.innerText = "✅ API Key saved successfully!";
       setTimeout(function () {

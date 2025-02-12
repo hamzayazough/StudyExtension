@@ -5,11 +5,9 @@
 chrome.runtime.onInstalled.addListener(function () {
   chrome.storage.sync.get(["apiKey"], function (data) {
     if (!data.apiKey) {
-      console.log("🔑 No API key found! Initializing empty API key.");
       chrome.storage.sync.set({
         apiKey: ""
       }, function () {
-        console.log("✅ Empty API key initialized.");
         chrome.runtime.openOptionsPage();
       });
     }
@@ -29,15 +27,15 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
       selectedText: info.selectionText
     }, function () {
       if (chrome.runtime.lastError) {
-        console.error("❌ Error saving selectedText:", chrome.runtime.lastError);
-      } else {
-        console.log("✅ Selected text saved:", info.selectionText);
+        console.error("Error saving selectedText:", chrome.runtime.lastError);
       }
-      chrome.windows.create({
-        url: chrome.runtime.getURL("popup.html"),
-        type: "popup",
-        width: 400,
-        height: 500
+      chrome.storage.sync.get("apiKey", function (data) {
+        chrome.windows.create({
+          url: chrome.runtime.getURL("popup.html"),
+          type: "popup",
+          width: 400,
+          height: 500
+        });
       });
     });
   }

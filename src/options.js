@@ -1,5 +1,3 @@
-console.log("🟢 options.js loaded successfully!");
-
 window.onload = () => {
     const saveButton = document.getElementById("saveApiKey");
     const apiKeyInput = document.getElementById("apiKeyInput");
@@ -20,7 +18,7 @@ window.onload = () => {
 
         chrome.storage.sync.set({ apiKey }, () => {
             chrome.storage.sync.get("apiKey", (data) => {
-              console.log("📦 API Key stored:", data.apiKey);
+              console.log("📦 API Key stored");
             });
           
             statusText.innerText = "✅ API Key saved successfully!";
