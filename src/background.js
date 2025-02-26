@@ -39,3 +39,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   }
 });
+
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch((error) => console.error("❌ Side Panel Error:", error));
+
