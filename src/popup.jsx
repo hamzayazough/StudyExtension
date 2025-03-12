@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
+import { encode } from 'gpt-3-encoder';
 import ReactMarkdown from "react-markdown";
 import ReactDOM from "react-dom/client";
 import Groq from "groq-sdk";
 import "./popup.css";
 
 const API_URL = "http://localhost:4000/graphql";
+const MAX_CONTEXT_TOKENS = 3000;
+
+function countTokens(text) {
+  return encode(text).length;
+}
 
 const Popup = () => {
   const [text, setText] = useState("");
@@ -78,8 +84,56 @@ const Popup = () => {
     try {
       setLoading(true);
 
+      let contextString = "";
+      if (selectedSubject && currentMessages.length > 0) {
+        const lastUserMessage = currentMessages
+          .filter((msg) => msg.role === "user")
+          .slice(-1)[0];
+
+        if (lastUserMessage) {
+          const searchQuery = `
+            query {
+              searchMessages(subjectId: ${selectedSubject.id}, query: """${lastUserMessage.content.replace(/"/g, '\\"')}""") {
+                content
+              }
+            }
+          `;
+          const contextResponse = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: searchQuery }),
+          });
+          const contextResult = await contextResponse.json();
+          const retrievedMessages = contextResult.data?.searchMessages;
+          if (retrievedMessages && retrievedMessages.length > 0) {
+            let contextTokensSoFar = 0;
+            let contextArray = [];
+            for (const msg of retrievedMessages) {
+              const msgTokens = countTokens(msg.content);
+              if (contextTokensSoFar + msgTokens > MAX_CONTEXT_TOKENS) {
+                break;
+              }
+              contextArray.push(msg.content);
+              contextTokensSoFar += msgTokens;
+            }
+            contextString = contextArray.join("\n");
+          }
+        }
+      }
+
+      let systemPrompt = "";
+      if (contextString) {
+        systemPrompt = `Context:\n${contextString}\n\nPlease use the above context to inform your response.`;
+      }
+
+      let messagesForAI = currentMessages;
+      console.log("🔍 Context:", messagesForAI);
+      if (systemPrompt) {
+        messagesForAI = [{ role: "system", content: systemPrompt }, ...currentMessages];
+      }
+
       const response = await groqInstance.chat.completions.create({
-        messages: currentMessages,
+        messages: messagesForAI,
         model: "llama-3.3-70b-versatile",
       });
 
@@ -112,7 +166,7 @@ const Popup = () => {
   };
 
   const saveMessageToSubject = async () => {
-    if (!selectedMessage || !selectedSubject){
+    if (!selectedMessage || !selectedSubject) {
       console.error("❌ Invalid message or subject selected.");
       return;
     }
@@ -139,7 +193,7 @@ const Popup = () => {
       if (result.data.addMessage) {
         console.log("✅ Message saved successfully.");
       } else {
-        console.error("❌ Failed to save message:",  JSON.stringify(result, null, 2));
+        console.error("❌ Failed to save message:", JSON.stringify(result, null, 2));
       }
     } catch (error) {
       console.error("❌ Error saving message:", error);
@@ -153,21 +207,23 @@ const Popup = () => {
       <div className="popup">
         <div className="popup-header">
           <span>🔵 StudySimplified (Groq)</span>
-          <button className="close-button" onClick={closePopup}>✖</button>
+          <button className="close-button" onClick={closePopup}>
+            ✖
+          </button>
         </div>
 
         {error && <div className="error-box">{error}</div>}
 
         <div className="chat-container">
           {messages.map((msg, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`message ${msg.role === "user" ? "user-message" : "ai-message"}`}
               onClick={() => confirmSaveMessage(msg)}
               title="Click to save this message"
             >
-          <ReactMarkdown>{msg.content}</ReactMarkdown>
-        </div>
+              <ReactMarkdown>{msg.content}</ReactMarkdown>
+            </div>
           ))}
         </div>
 
@@ -191,8 +247,12 @@ const Popup = () => {
             <h3>Save Message?</h3>
             <p>{selectedMessage.content}</p>
             <div className="modal-actions">
-              <button onClick={saveMessageToSubject} className="confirm-btn">✅ Yes</button>
-              <button onClick={() => setSelectedMessage(null)} className="cancel-btn">❌ No</button>
+              <button onClick={saveMessageToSubject} className="confirm-btn">
+                ✅ Yes
+              </button>
+              <button onClick={() => setSelectedMessage(null)} className="cancel-btn">
+                ❌ No
+              </button>
             </div>
           </div>
         </div>

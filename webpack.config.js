@@ -33,6 +33,13 @@ module.exports = {
   },
   resolve: {
     extensions: [".js", ".jsx"],
+    fallback: {
+      path: require.resolve("path-browserify"),
+      fs: false,
+    },
+    alias: {
+      fs: path.resolve(__dirname, "src/fs-polyfill.js")
+    }
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -58,5 +65,4 @@ module.exports = {
       ],
     }),
   ],
-  
 };
