@@ -40,5 +40,10 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     });
   }
 });
+chrome.sidePanel.setPanelBehavior({
+  openPanelOnActionClick: true
+})["catch"](function (error) {
+  return console.error("❌ Side Panel Error:", error);
+});
 /******/ })()
 ;

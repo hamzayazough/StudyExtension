@@ -7,9 +7,10 @@ module.exports = {
   devtool: false,
   entry: {
     popup: "./src/popup.jsx",
+    sidepanel: "./src/sidepanel.jsx",
     options: "./src/options.js",
     content: "./src/content.js",
-    background: "./src/background.js"
+    background: "./src/background.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -25,13 +26,20 @@ module.exports = {
         },
       },
       {
-        test: /\.css$/, // ✅ Add CSS Loader
+        test: /\.css$/,
         use: ["style-loader", "css-loader"],
       }
     ],
   },
   resolve: {
     extensions: [".js", ".jsx"],
+    fallback: {
+      path: require.resolve("path-browserify"),
+      fs: false,
+    },
+    alias: {
+      fs: path.resolve(__dirname, "src/fs-polyfill.js")
+    }
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -44,13 +52,17 @@ module.exports = {
       filename: "options.html",
       chunks: ["options"],
     }),
+    new HtmlWebpackPlugin({
+      template: "./public/sidepanel.html",
+      filename: "sidepanel.html",
+      chunks: ["sidepanel"],
+    }),
     new CopyWebpackPlugin({
       patterns: [
         { from: "public/manifest.json", to: "manifest.json" },
         { from: "assets", to: "assets" },
-        { from: "src/popup.css", to: "popup.css" } // ✅ Copy popup.css
+        { from: "src/popup.css", to: "popup.css" }
       ],
     }),
   ],
-  
 };

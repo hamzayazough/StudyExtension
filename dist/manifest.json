@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "StudySimplified",
     "version": "1.0",
-    "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
+    "permissions": ["contextMenus", "storage", "activeTab", "scripting", "sidePanel"],
     "background": {
         "service_worker": "background.js",
         "type": "module"
@@ -23,13 +23,16 @@
             "run_at": "document_idle"
         }
     ],
+    "side_panel": {
+        "default_path": "sidePanel.html"
+    },
     "options_page": "options.html",
     "content_security_policy": {
         "extension_pages": "script-src 'self'; object-src 'self'"
     },
     "web_accessible_resources": [
         {
-            "resources": ["popup.js", "popup.html", "popup.css"],
+            "resources": ["popup.js", "popup.html", "popup.css", "sidePanel.html", "sidePanel.js", "sidePanel.css"],
             "matches": ["<all_urls>"]
         }
     ]
